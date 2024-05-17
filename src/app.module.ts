@@ -4,8 +4,8 @@ import { APP_GUARD } from '@nestjs/core';
 
 import { AuthModule } from './auth/auth.module';
 import { JwtAuthGuard } from './auth/guargs/jwt-auth.guard';
+import { PlantModule } from './plant/plant.module';
 import { PlantTypeModule } from './plant-type/plant-type.module';
-import { PlantsModule } from './plants/plants.module';
 import { PrismaModule } from './prisma/prisma.module';
 import { UserModule } from './user/user.module';
 @Module({
@@ -14,7 +14,7 @@ import { UserModule } from './user/user.module';
     PrismaModule,
     UserModule,
     AuthModule,
-    PlantsModule,
+    PlantModule,
     PlantTypeModule,
   ],
   providers: [
