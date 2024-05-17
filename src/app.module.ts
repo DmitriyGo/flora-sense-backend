@@ -5,9 +5,11 @@ import { APP_GUARD } from '@nestjs/core';
 import { AuthModule } from './auth/auth.module';
 import { JwtAuthGuard } from './auth/guargs/jwt-auth.guard';
 import { PlantModule } from './plant/plant.module';
+import { PlantDataModule } from './plant-data/plant-data.module';
 import { PlantTypeModule } from './plant-type/plant-type.module';
 import { PrismaModule } from './prisma/prisma.module';
 import { UserModule } from './user/user.module';
+
 @Module({
   imports: [
     ConfigModule.forRoot({ isGlobal: true }),
@@ -16,6 +18,7 @@ import { UserModule } from './user/user.module';
     AuthModule,
     PlantModule,
     PlantTypeModule,
+    PlantDataModule,
   ],
   providers: [
     {
