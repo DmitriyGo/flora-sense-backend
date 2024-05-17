@@ -17,6 +17,7 @@ model User {
   roles     Role[]
   Token     Token[]
   isBlocked Boolean   @default(false) @map("is_blocked")
+  plants    Plant[]
 
   @@map("users")
 }
@@ -29,6 +30,46 @@ model Token {
   userAgent String   @map("user_agent")
 
   @@map("tokens")
+}
+
+model Plant {
+  id            String    @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  name          String
+  type          PlantType @relation(fields: [plantTypeId], references: [id])
+  plantTypeId   String    @db.Uuid
+  user          User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId        String    @db.Uuid
+  plantingDate  DateTime  @map("planting_date")
+  currentStatus String    @map("current_status")
+  soilType      String    @map("soil_type")
+  data          Data[]
+
+  @@map("plants")
+}
+
+model Data {
+  id            String   @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  humidity      Float
+  temperature   Float
+  light         Float
+  nutrientLevel Float    @map("nutrient_level")
+  plant         Plant    @relation(fields: [plantId], references: [id], onDelete: Cascade)
+  plantId       String   @db.Uuid
+  timestamp     DateTime @default(now())
+
+  @@map("data")
+}
+
+model PlantType {
+  id                 String  @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  typeName           String  @map("type_name")
+  description        String
+  optimalHumidity    Float   @map("optimal_humidity")
+  optimalTemperature Float   @map("optimal_temperature")
+  optimalLight       Float   @map("optimal_light")
+  plants             Plant[]
+
+  @@map("plant_types")
 }
 
 enum Role {

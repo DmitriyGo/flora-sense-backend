@@ -1106,6 +1106,13 @@
   resolved "https://registry.yarnpkg.com/@types/json5/-/json5-0.0.29.tgz#ee28707ae94e11d2b827bcbe5270bcea7f3e71ee"
   integrity sha512-dRLjCWHYg4oaA77cxO64oO+7JwCwnIzkZPdrrC71jQmQtlhM556pwKo5bUzqvZndkVbeFLIIi+9TC40JNF5hNQ==
 
+"@types/jsonwebtoken@*":
+  version "9.0.6"
+  resolved "https://registry.yarnpkg.com/@types/jsonwebtoken/-/jsonwebtoken-9.0.6.tgz#d1af3544d99ad992fb6681bbe60676e06b032bd3"
+  integrity sha512-/5hndP5dCjloafCXns6SZyESp3Ldq7YjH3zwzwczYnjxIT0Fqzk5ROSYVGfFyczIue7IUEj8hkvLbPoLQ18vQw==
+  dependencies:
+    "@types/node" "*"
+
 "@types/jsonwebtoken@9.0.5":
   version "9.0.5"
   resolved "https://registry.yarnpkg.com/@types/jsonwebtoken/-/jsonwebtoken-9.0.5.tgz#0bd9b841c9e6c5a937c17656e2368f65da025588"
@@ -1122,6 +1129,13 @@
   version "1.3.5"
   resolved "https://registry.yarnpkg.com/@types/mime/-/mime-1.3.5.tgz#1ef302e01cf7d2b5a0fa526790c9123bf1d06690"
   integrity sha512-/pyBZWSLD2n0dcHE3hq8s8ZvcETHtEuF+3E7XVt0Ig2nvsVQXdghHVcEkIWjy9A0wKfTn97a/PSDYohKIlnP/w==
+
+"@types/multer@^1.4.11":
+  version "1.4.11"
+  resolved "https://registry.yarnpkg.com/@types/multer/-/multer-1.4.11.tgz#c70792670513b4af1159a2b60bf48cc932af55c5"
+  integrity sha512-svK240gr6LVWvv3YGyhLlA+6LRRWA4mnGIU7RcNmgjBYFl6665wcXrRfxGp5tEPVHUNm5FMcmq7too9bxCwX/w==
+  dependencies:
+    "@types/express" "*"
 
 "@types/node@*", "@types/node@^20.3.1":
   version "20.12.7"
@@ -1146,6 +1160,14 @@
     "@types/passport" "*"
     "@types/passport-oauth2" "*"
 
+"@types/passport-jwt@^4.0.1":
+  version "4.0.1"
+  resolved "https://registry.yarnpkg.com/@types/passport-jwt/-/passport-jwt-4.0.1.tgz#080fbe934fb9f6954fb88ec4cdf4bb2cc7c4d435"
+  integrity sha512-Y0Ykz6nWP4jpxgEUYq8NoVZeCQPo1ZndJLfapI249g1jHChvRfZRO/LS3tqu26YgAS/laI1qx98sYGz0IalRXQ==
+  dependencies:
+    "@types/jsonwebtoken" "*"
+    "@types/passport-strategy" "*"
+
 "@types/passport-oauth2@*":
   version "1.4.15"
   resolved "https://registry.yarnpkg.com/@types/passport-oauth2/-/passport-oauth2-1.4.15.tgz#34f2684f53aad36e664cd01ca9879224229f47e7"
@@ -1153,6 +1175,14 @@
   dependencies:
     "@types/express" "*"
     "@types/oauth" "*"
+    "@types/passport" "*"
+
+"@types/passport-strategy@*":
+  version "0.2.38"
+  resolved "https://registry.yarnpkg.com/@types/passport-strategy/-/passport-strategy-0.2.38.tgz#482abba0b165cd4553ec8b748f30b022bd6c04d3"
+  integrity sha512-GC6eMqqojOooq993Tmnmp7AUTbbQSgilyvpCYQjT+H6JfG/g6RGc7nXEniZlp0zyKJ0WUdOiZWLBZft9Yug1uA==
+  dependencies:
+    "@types/express" "*"
     "@types/passport" "*"
 
 "@types/passport@*":
@@ -5379,6 +5409,19 @@ multer@1.4.4-lts.1:
   version "1.4.4-lts.1"
   resolved "https://registry.yarnpkg.com/multer/-/multer-1.4.4-lts.1.tgz#24100f701a4611211cfae94ae16ea39bb314e04d"
   integrity sha512-WeSGziVj6+Z2/MwQo3GvqzgR+9Uc+qt8SwHKh3gvNPiISKfsMfG4SvCOFYlxxgkXt7yIV2i1yczehm0EOKIxIg==
+  dependencies:
+    append-field "^1.0.0"
+    busboy "^1.0.0"
+    concat-stream "^1.5.2"
+    mkdirp "^0.5.4"
+    object-assign "^4.1.1"
+    type-is "^1.6.4"
+    xtend "^4.0.0"
+
+multer@^1.4.5-lts.1:
+  version "1.4.5-lts.1"
+  resolved "https://registry.yarnpkg.com/multer/-/multer-1.4.5-lts.1.tgz#803e24ad1984f58edffbc79f56e305aec5cfd1ac"
+  integrity sha512-ywPWvcDMeH+z9gQq5qYHCCy+ethsk4goepZ45GLD63fOu0YcNecQxi64nDs3qluZB+murG3/D4dJ7+dGctcCQQ==
   dependencies:
     append-field "^1.0.0"
     busboy "^1.0.0"
