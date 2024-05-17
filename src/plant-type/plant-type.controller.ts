@@ -1,9 +1,10 @@
-import { Controller, Get, Post, Put, Delete, Param, Body } from '@nestjs/common';
-import { ApiTags, ApiOperation, ApiParam, ApiBody } from '@nestjs/swagger';
+import { Controller, Get, Post, Delete, Param, Body, Patch } from '@nestjs/common';
+import { ApiTags, ApiOperation, ApiParam, ApiBody, ApiBearerAuth } from '@nestjs/swagger';
 
 import { CreatePlantTypeDto, UpdatePlantTypeDto } from './dto';
 import { PlantTypeService } from './plant-type.service';
 
+@ApiBearerAuth()
 @ApiTags('plant-types')
 @Controller('plant-types')
 export class PlantTypeController {
@@ -32,7 +33,7 @@ export class PlantTypeController {
   @ApiOperation({ summary: 'Update a plant type' })
   @ApiParam({ name: 'id', required: true, description: 'ID of the plant type' })
   @ApiBody({ type: UpdatePlantTypeDto })
-  @Put(':id')
+  @Patch(':id')
   async update(@Param('id') id: string, @Body() updatePlantTypeDto: UpdatePlantTypeDto) {
     return this.plantTypeService.update(id, updatePlantTypeDto);
   }
