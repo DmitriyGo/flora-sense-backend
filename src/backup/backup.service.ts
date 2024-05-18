@@ -1,7 +1,7 @@
-import { Injectable, NotFoundException, InternalServerErrorException } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
+import { Role } from '@prisma/client';
 import * as csvParser from 'csv-parser';
 import { createObjectCsvWriter } from 'csv-writer';
-import { v4 as uuidv4 } from 'uuid';
 
 import * as fs from 'fs';
 import * as path from 'path';
@@ -15,203 +15,292 @@ export class BackupService {
   constructor(private prisma: PrismaService) {}
 
   async createBackup(): Promise<BackupDto> {
-    const users = await this.prisma.user.findMany();
-    const plants = await this.prisma.plant.findMany();
-    const data = await this.prisma.data.findMany();
-    const plantTypes = await this.prisma.plantType.findMany();
-    const tokens = await this.prisma.token.findMany();
+    const users = await this.prisma.user.findMany({
+      include: {
+        Token: true,
+        plants: {
+          include: {
+            data: true,
+            type: true,
+          },
+        },
+      },
+    });
 
-    if (!fs.existsSync('backups')) {
-      fs.mkdirSync('backups');
+    const plantTypes = await this.prisma.plantType.findMany();
+
+    const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
+    const backupDir = path.resolve('backups', timestamp);
+    if (!fs.existsSync(backupDir)) {
+      fs.mkdirSync(backupDir, { recursive: true });
     }
 
-    const fileName = `backups/backup-${new Date().toISOString()}.csv`;
-
-    const csvWriter = createObjectCsvWriter({
-      path: fileName,
+    const userWriter = createObjectCsvWriter({
+      path: path.join(backupDir, `users.csv`),
       header: [
-        // User columns
-        { id: 'id', title: 'ID' },
-        { id: 'email', title: 'Email' },
-        { id: 'password', title: 'Password' },
-        { id: 'provider', title: 'Provider' },
-        { id: 'createdAt', title: 'CreatedAt' },
-        { id: 'updatedAt', title: 'UpdatedAt' },
-        { id: 'roles', title: 'Roles' },
-        { id: 'isBlocked', title: 'IsBlocked' },
-        // Plant columns
-        { id: 'plantId', title: 'PlantID' },
-        { id: 'name', title: 'Name' },
-        { id: 'plantTypeId', title: 'PlantTypeID' },
-        { id: 'userId', title: 'UserID' },
-        { id: 'plantingDate', title: 'PlantingDate' },
-        { id: 'currentStatus', title: 'CurrentStatus' },
-        { id: 'soilType', title: 'SoilType' },
-        // Data columns
-        { id: 'dataId', title: 'DataID' },
-        { id: 'humidity', title: 'Humidity' },
-        { id: 'temperature', title: 'Temperature' },
-        { id: 'light', title: 'Light' },
-        { id: 'nutrientLevel', title: 'NutrientLevel' },
-        { id: 'plantDataId', title: 'PlantDataID' },
-        { id: 'timestamp', title: 'Timestamp' },
-        // PlantType columns
-        { id: 'plantTypeId', title: 'PlantTypeID' },
-        { id: 'typeName', title: 'TypeName' },
-        { id: 'description', title: 'Description' },
-        { id: 'optimalHumidity', title: 'OptimalHumidity' },
-        { id: 'optimalTemperature', title: 'OptimalTemperature' },
-        { id: 'optimalLight', title: 'OptimalLight' },
-        // Token columns
-        { id: 'tokenId', title: 'TokenID' },
-        { id: 'token', title: 'Token' },
-        { id: 'exp', title: 'Exp' },
-        { id: 'tokenUserId', title: 'UserID' },
-        { id: 'userAgent', title: 'UserAgent' },
+        { id: 'id', title: 'id' },
+        { id: 'email', title: 'email' },
+        { id: 'password', title: 'password' },
+        { id: 'provider', title: 'provider' },
+        { id: 'createdAt', title: 'createdAt' },
+        { id: 'updatedAt', title: 'updatedAt' },
+        { id: 'roles', title: 'roles' },
+        { id: 'isBlocked', title: 'isBlocked' },
       ],
     });
 
-    const records = [
-      ...users.map((user) => ({
-        ...user,
-        roles: user.roles.join(','),
+    const userRecords = users.map((user) => ({
+      id: user.id,
+      email: user.email,
+      password: user.password,
+      provider: user.provider || '',
+      createdAt: user.createdAt.toISOString(),
+      updatedAt: user.updatedAt.toISOString(),
+      roles: user.roles.join(' '),
+      isBlocked: user.isBlocked,
+    }));
+
+    await userWriter.writeRecords(userRecords);
+
+    const tokenWriter = createObjectCsvWriter({
+      path: path.join(backupDir, `tokens.csv`),
+      header: [
+        { id: 'token', title: 'token' },
+        { id: 'exp', title: 'exp' },
+        { id: 'userId', title: 'userId' },
+        { id: 'userAgent', title: 'userAgent' },
+      ],
+    });
+
+    const tokenRecords = users.flatMap((user) =>
+      user.Token.map((token) => ({
+        token: token.token,
+        exp: token.exp.toISOString(),
+        userId: user.id,
+        userAgent: token.userAgent,
       })),
-      ...plants,
-      ...data,
-      ...plantTypes,
-      ...tokens,
-    ];
+    );
 
-    await csvWriter.writeRecords(records);
+    await tokenWriter.writeRecords(tokenRecords);
 
-    return { fileName };
+    const plantWriter = createObjectCsvWriter({
+      path: path.join(backupDir, `plants.csv`),
+      header: [
+        { id: 'id', title: 'id' },
+        { id: 'name', title: 'name' },
+        { id: 'plantTypeId', title: 'plantTypeId' },
+        { id: 'userId', title: 'userId' },
+        { id: 'plantingDate', title: 'plantingDate' },
+        { id: 'currentStatus', title: 'currentStatus' },
+        { id: 'soilType', title: 'soilType' },
+      ],
+    });
+
+    const plantRecords = users.flatMap((user) =>
+      user.plants.map((plant) => ({
+        id: plant.id,
+        name: plant.name,
+        plantTypeId: plant.plantTypeId,
+        userId: user.id,
+        plantingDate: plant.plantingDate.toISOString(),
+        currentStatus: plant.currentStatus,
+        soilType: plant.soilType,
+      })),
+    );
+
+    await plantWriter.writeRecords(plantRecords);
+
+    const dataWriter = createObjectCsvWriter({
+      path: path.join(backupDir, `data.csv`),
+      header: [
+        { id: 'id', title: 'id' },
+        { id: 'humidity', title: 'humidity' },
+        { id: 'temperature', title: 'temperature' },
+        { id: 'light', title: 'light' },
+        { id: 'nutrientLevel', title: 'nutrientLevel' },
+        { id: 'plantId', title: 'plantId' },
+        { id: 'timestamp', title: 'timestamp' },
+      ],
+    });
+
+    const dataRecords = users.flatMap((user) =>
+      user.plants.flatMap((plant) =>
+        plant.data.map((data) => ({
+          id: data.id,
+          humidity: data.humidity,
+          temperature: data.temperature,
+          light: data.light,
+          nutrientLevel: data.nutrientLevel,
+          plantId: plant.id,
+          timestamp: data.timestamp.toISOString(),
+        })),
+      ),
+    );
+
+    await dataWriter.writeRecords(dataRecords);
+
+    const plantTypeWriter = createObjectCsvWriter({
+      path: path.join(backupDir, `plantTypes.csv`),
+      header: [
+        { id: 'id', title: 'id' },
+        { id: 'typeName', title: 'typeName' },
+        { id: 'description', title: 'description' },
+        { id: 'optimalHumidity', title: 'optimalHumidity' },
+        { id: 'optimalTemperature', title: 'optimalTemperature' },
+        { id: 'optimalLight', title: 'optimalLight' },
+      ],
+    });
+
+    const plantTypeRecords = plantTypes.map((plantType) => ({
+      id: plantType.id,
+      typeName: plantType.typeName,
+      description: plantType.description,
+      optimalHumidity: plantType.optimalHumidity,
+      optimalTemperature: plantType.optimalTemperature,
+      optimalLight: plantType.optimalLight,
+    }));
+
+    await plantTypeWriter.writeRecords(plantTypeRecords);
+
+    const backupDto = new BackupDto();
+    backupDto.fileName = timestamp;
+
+    return backupDto;
   }
 
-  async restoreBackup(fileName: string): Promise<void> {
-    const filePath = path.resolve('backups', fileName);
+  async restoreBackup(folderName: string): Promise<void> {
+    const backupDir = path.resolve('backups', folderName);
 
-    if (!fs.existsSync(filePath)) {
-      throw new NotFoundException(`Backup file ${fileName} not found`);
+
+    const parseCSV = (filePath: string) => {
+      return new Promise<any[]>((resolve, reject) => {
+        const records: any[] = [];
+        fs.createReadStream(filePath)
+          .pipe(csvParser())
+          .on('data', (data) => records.push(data))
+          .on('end', () => resolve(records))
+          .on('error', reject);
+      });
+    };
+    
+    const userRecords = await parseCSV(path.join(backupDir, 'users.csv'));
+    for (const record of userRecords) {
+      const { id, email, password, provider, createdAt, updatedAt, roles, isBlocked } = record;
+      await this.prisma.user.upsert({
+        where: { id },
+        update: {
+          email,
+          password,
+          provider: provider || null,
+          createdAt: new Date(createdAt),
+          updatedAt: new Date(updatedAt),
+          roles: roles.split(' ') as Role[],
+          isBlocked: isBlocked === 'true',
+        },
+        create: {
+          id,
+          email,
+          password,
+          provider: provider || null,
+          createdAt: new Date(createdAt),
+          updatedAt: new Date(updatedAt),
+          roles: roles.split(' ') as Role[],
+          isBlocked: isBlocked === 'true',
+        },
+      });
     }
 
-    const csvData = [];
-    fs.createReadStream(filePath)
-      .pipe(csvParser())
-      .on('data', (row) => {
-        csvData.push(row);
-      })
-      .on('end', async () => {
-        await this.prisma.token.deleteMany({});
-        await this.prisma.data.deleteMany({});
-        await this.prisma.plant.deleteMany({});
-        await this.prisma.plantType.deleteMany({});
-        await this.prisma.user.deleteMany({});
-
-        const users = [];
-        const plants = [];
-        const data = [];
-        const plantTypes = [];
-        const tokens = [];
-
-        for (const row of csvData) {
-          if (row.Email) {
-            users.push(row);
-          } else if (row.PlantID) {
-            plants.push(row);
-          } else if (row.DataID) {
-            data.push(row);
-          } else if (row.TypeName) {
-            plantTypes.push(row);
-          } else if (row.Token) {
-            tokens.push(row);
-          }
-        }
-
-        console.log('users ==>', users);
-        console.log('plants ==>', plants);
-        console.log('data ==>', data);
-        console.log('plantTypes ==>', plantTypes);
-        console.log('tokens ==>', tokens);
-
-        await Promise.all(
-          users.map((user) =>
-            this.prisma.user.create({
-              data: {
-                id: user.ID || uuidv4(),
-                email: user.Email,
-                password: user.Password,
-                provider: user.Provider || null, // Set to null if empty
-                createdAt: new Date(user.CreatedAt),
-                updatedAt: new Date(user.UpdatedAt),
-                roles: user.Roles.split(',') as any,
-                isBlocked: user.IsBlocked === 'true',
-              },
-            }),
-          ),
-        );
-
-        await Promise.all(
-          plantTypes.map((plantType) =>
-            this.prisma.plantType.create({
-              data: {
-                id: plantType.PlantTypeID || uuidv4(),
-                typeName: plantType.TypeName,
-                description: plantType.Description,
-                optimalHumidity: parseFloat(plantType.OptimalHumidity),
-                optimalTemperature: parseFloat(plantType.OptimalTemperature),
-                optimalLight: parseFloat(plantType.OptimalLight),
-              },
-            }),
-          ),
-        );
-
-        await Promise.all(
-          plants.map((plant) =>
-            this.prisma.plant.create({
-              data: {
-                id: plant.PlantID || uuidv4(),
-                name: plant.Name,
-                plantTypeId: plant.PlantTypeID || null,
-                userId: plant.UserID || null,
-                plantingDate: plant.PlantingDate ? new Date(plant.PlantingDate) : null,
-                currentStatus: plant.CurrentStatus,
-                soilType: plant.SoilType,
-              },
-            }),
-          ),
-        );
-
-        await Promise.all(
-          data.map((dataRow) =>
-            this.prisma.data.create({
-              data: {
-                id: dataRow.DataID || uuidv4(),
-                humidity: parseFloat(dataRow.Humidity),
-                temperature: parseFloat(dataRow.Temperature),
-                light: parseFloat(dataRow.Light),
-                nutrientLevel: parseFloat(dataRow.NutrientLevel),
-                plantId: dataRow.PlantDataID,
-                timestamp: dataRow.Timestamp ? new Date(dataRow.Timestamp) : new Date(),
-              },
-            }),
-          ),
-        );
-
-        await Promise.all(
-          tokens.map((token) =>
-            this.prisma.token.create({
-              data: {
-                token: token.Token,
-                exp: new Date(token.Exp) || new Date(),
-                userId: token.UserID,
-                userAgent: token.UserAgent,
-              },
-            }),
-          ),
-        );
-      })
-      .on('error', (err) => {
-        throw new InternalServerErrorException(`Error processing CSV file: ${err.message}`);
+    const tokenRecords = await parseCSV(path.join(backupDir, 'tokens.csv'));
+    for (const record of tokenRecords) {
+      const { token, exp, userId, userAgent } = record;
+      await this.prisma.token.upsert({
+        where: { token },
+        update: {
+          exp: new Date(exp),
+          userId,
+          userAgent,
+        },
+        create: {
+          token,
+          exp: new Date(exp),
+          userId,
+          userAgent,
+        },
       });
+    }
+
+    const plantRecords = await parseCSV(path.join(backupDir, 'plants.csv'));
+    for (const record of plantRecords) {
+      const { id, name, plantTypeId, userId, plantingDate, currentStatus, soilType } = record;
+      await this.prisma.plant.upsert({
+        where: { id },
+        update: {
+          name,
+          plantTypeId,
+          userId,
+          plantingDate: new Date(plantingDate),
+          currentStatus,
+          soilType,
+        },
+        create: {
+          id,
+          name,
+          plantTypeId,
+          userId,
+          plantingDate: new Date(plantingDate),
+          currentStatus,
+          soilType,
+        },
+      });
+    }
+
+    const dataRecords = await parseCSV(path.join(backupDir, 'data.csv'));
+    for (const record of dataRecords) {
+      const { id, humidity, temperature, light, nutrientLevel, plantId, timestamp } = record;
+      await this.prisma.data.upsert({
+        where: { id },
+        update: {
+          humidity: parseFloat(humidity),
+          temperature: parseFloat(temperature),
+          light: parseFloat(light),
+          nutrientLevel: parseFloat(nutrientLevel),
+          plantId,
+          timestamp: new Date(timestamp),
+        },
+        create: {
+          id,
+          humidity: parseFloat(humidity),
+          temperature: parseFloat(temperature),
+          light: parseFloat(light),
+          nutrientLevel: parseFloat(nutrientLevel),
+          plantId,
+          timestamp: new Date(timestamp),
+        },
+      });
+    }
+
+    const plantTypeRecords = await parseCSV(path.join(backupDir, 'plantTypes.csv'));
+    for (const record of plantTypeRecords) {
+      const { id, typeName, description, optimalHumidity, optimalTemperature, optimalLight } =
+        record;
+      await this.prisma.plantType.upsert({
+        where: { id },
+        update: {
+          typeName,
+          description,
+          optimalHumidity: parseFloat(optimalHumidity),
+          optimalTemperature: parseFloat(optimalTemperature),
+          optimalLight: parseFloat(optimalLight),
+        },
+        create: {
+          id,
+          typeName,
+          description,
+          optimalHumidity: parseFloat(optimalHumidity),
+          optimalTemperature: parseFloat(optimalTemperature),
+          optimalLight: parseFloat(optimalLight),
+        },
+      });
+    }
   }
 }

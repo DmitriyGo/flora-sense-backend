@@ -1,0 +1,4 @@
+id,typeName,description,optimalHumidity,optimalTemperature,optimalLight
+e48938e4-cafd-446d-ab40-9fb36abee68c,Yarik huy,Plants suitable for indoor environments,40,22,300
+3bd21a9b-2dc5-462b-b504-fa21e41be5f5,test-type-1,test-description-1,40,22,300
+95430010-a514-4ae2-aa85-e0e4af4a2bf9,Indoor Plant,Plants suitable for indoor environments,40,22,300

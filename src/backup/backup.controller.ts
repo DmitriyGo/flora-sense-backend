@@ -1,9 +1,5 @@
-import { Controller, Post, Get, Param, Body, Res, NotFoundException } from '@nestjs/common';
-import { ApiTags, ApiOperation, ApiBody, ApiParam, ApiBearerAuth } from '@nestjs/swagger';
-import { Response } from 'express';
-
-import * as fs from 'fs';
-import * as path from 'path';
+import { Controller, Post, Body } from '@nestjs/common';
+import { ApiTags, ApiOperation, ApiBody, ApiBearerAuth } from '@nestjs/swagger';
 
 import { BackupService } from './backup.service';
 import { BackupDto } from './dto/backup.dto';
@@ -27,16 +23,23 @@ export class BackupController {
     return this.backupService.restoreBackup(backupDto.fileName);
   }
 
-  @ApiOperation({ summary: 'Download a backup' })
-  @ApiParam({ name: 'fileName', required: true, description: 'The name of the backup file' })
-  @Get('download/:fileName')
-  async downloadBackup(@Param('fileName') fileName: string, @Res() res: Response) {
-    const filePath = path.resolve('backups', fileName);
+  //   @ApiOperation({ summary: 'Download a backup' })
+  //   @ApiParam({ name: 'folderName', required: true, description: 'The name of the backup folder' })
+  //   @Get('download/:folderName')
+  //   async downloadBackup(@Param('folderName') folderName: string, @Res() res: Response) {
+  //     const folderPath = path.resolve('backups', folderName);
 
-    if (!fs.existsSync(filePath)) {
-      throw new NotFoundException(`Backup file ${fileName} not found`);
-    }
+  //     if (!fs.existsSync(folderPath)) {
+  //       throw new NotFoundException(`Backup folder ${folderName} not found`);
+  //     }
 
-    res.download(filePath);
-  }
+  //     const zipFilePath = `${folderPath}.zip`;
+
+  //     // Create a zip file of the backup folder
+  //     const output = fs.createWriteStream(zipFilePath);
+
+  //     output.on('close', () => {
+  //       res.download(zipFilePath);
+  //     });
+  //   }
 }

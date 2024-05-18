@@ -1,0 +1,2 @@
+id,email,password,provider,createdAt,updatedAt,roles,isBlocked
+325a1fc9-ec61-43b0-90e1-a14f0faea540,user@example.com,$2b$10$h2GqFNVXwqueR88DBeU/6Op4SSAQtLIjOi51ntnrpQ9tXHqGAzhF6,,2024-05-17T20:05:23.000Z,2024-05-17T20:05:23.000Z,USER ADMIN,false
