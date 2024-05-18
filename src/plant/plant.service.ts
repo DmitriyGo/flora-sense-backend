@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 
 import { CreatePlantDto, UpdatePlantDto } from './dto';
 
@@ -29,17 +29,17 @@ export class PlantService {
     });
   }
   async create(data: CreatePlantDto) {
-    // Перевірка існування plantTypeId
-    const plantType = await this.prisma.plantType.findUnique({ where: { id: data.plantTypeId } });
-    if (!plantType) {
-      throw new NotFoundException(`PlantType with ID ${data.plantTypeId} not found`);
-    }
-    console.log('plantType ==>', plantType);
-    // Перевірка існування userId
-    const user = await this.prisma.user.findUnique({ where: { id: data.userId } });
-    if (!user) {
-      throw new NotFoundException(`User with ID ${data.userId} not found`);
-    }
+    // console.log('this.prisma ==>', this.prisma);
+    // const plantType = await this.prisma.plantType.findUnique({ where: { id: data.plantTypeId } });
+    // if (!plantType) {
+    //   throw new NotFoundException(`PlantType with ID ${data.plantTypeId} not found`);
+    // }
+    // console.log('plantType ==>', plantType);
+    // // Перевірка існування userId
+    // const user = await this.prisma.user.findUnique({ where: { id: data.userId } });
+    // if (!user) {
+    //   throw new NotFoundException(`User with ID ${data.userId} not found`);
+    // }
 
     return this.prisma.plant.create({
       data,

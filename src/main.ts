@@ -1,6 +1,7 @@
 import { Logger, ValidationPipe } from '@nestjs/common';
 import { NestFactory } from '@nestjs/core';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
+import { useContainer } from 'class-validator';
 import * as cookieParser from 'cookie-parser';
 
 import { AppModule } from './app.module';
@@ -25,6 +26,7 @@ async function bootstrap() {
       },
     }),
   );
+  useContainer(app.select(AppModule), { fallbackOnErrors: true });
 
   const config = new DocumentBuilder()
     .setTitle('Insanity Bets API')
@@ -37,7 +39,6 @@ async function bootstrap() {
   SwaggerModule.setup(`${globalPrefix}/swagger`, app, document);
 
   await app.listen(port);
-
   Logger.log(`🚀 Application is running on: http://localhost:${port}/${globalPrefix}`);
   Logger.log(`🚀 Swagger is running on: http://localhost:${port}/${globalPrefix}/swagger`);
 }

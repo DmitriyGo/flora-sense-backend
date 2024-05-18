@@ -9,6 +9,7 @@ import { PlantDataModule } from './plant-data/plant-data.module';
 import { PlantTypeModule } from './plant-type/plant-type.module';
 import { PrismaModule } from './prisma/prisma.module';
 import { UserModule } from './user/user.module';
+import { IsPlantTypeExistsConstraint, IsUserExistsConstraint } from './validators';
 
 @Module({
   imports: [
@@ -25,6 +26,8 @@ import { UserModule } from './user/user.module';
       provide: APP_GUARD,
       useClass: JwtAuthGuard,
     },
+    IsPlantTypeExistsConstraint,
+    IsUserExistsConstraint,
   ],
 })
 export class AppModule {}

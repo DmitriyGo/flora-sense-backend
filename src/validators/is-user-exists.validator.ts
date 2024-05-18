@@ -4,7 +4,9 @@ import {
   ValidatorConstraintInterface,
   registerDecorator,
   ValidationOptions,
+  ValidationArguments,
 } from 'class-validator';
+import { validate as isUUID } from 'uuid';
 
 import { PrismaService } from '@prisma/prisma.service';
 
@@ -14,12 +16,19 @@ export class IsUserExistsConstraint implements ValidatorConstraintInterface {
   constructor(private readonly prisma: PrismaService) {}
 
   async validate(userId: string) {
+    if (!isUUID(userId)) {
+      return false;
+    }
     const user = await this.prisma.user.findUnique({ where: { id: userId } });
     return !!user;
   }
 
-  defaultMessage() {
-    return 'User with ID $value does not exist';
+  defaultMessage(args: ValidationArguments) {
+    const userId = args.value;
+    if (!isUUID(userId)) {
+      return `User with ID ${userId} is not a valid UUID`;
+    }
+    return `User with ID ${userId} does not exist`;
   }
 }
 

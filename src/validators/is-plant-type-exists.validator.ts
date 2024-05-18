@@ -2,9 +2,11 @@ import { Injectable } from '@nestjs/common';
 import {
   ValidatorConstraint,
   ValidatorConstraintInterface,
+  ValidationArguments,
   registerDecorator,
   ValidationOptions,
 } from 'class-validator';
+import { validate as isUUID } from 'uuid';
 
 import { PrismaService } from '@prisma/prisma.service';
 
@@ -14,19 +16,23 @@ export class IsPlantTypeExistsConstraint implements ValidatorConstraintInterface
   constructor(private readonly prisma: PrismaService) {}
 
   async validate(plantTypeId: string) {
-    console.log('444');
+    if (!isUUID(plantTypeId)) {
+      return false;
+    }
     const plantType = await this.prisma.plantType.findUnique({ where: { id: plantTypeId } });
-    console.log(651);
     return !!plantType;
   }
 
-  defaultMessage() {
-    return 'PlantType with ID $value does not exist';
+  defaultMessage(args: ValidationArguments) {
+    const plantTypeId = args.value;
+    if (!isUUID(plantTypeId)) {
+      return `PlantType with ID ${plantTypeId} is not a valid UUID`;
+    }
+    return `PlantType with ID ${plantTypeId} does not exist`;
   }
 }
 
 export function IsPlantTypeExists(validationOptions?: ValidationOptions) {
-  console.log('12');
   return function (object: object, propertyName: string) {
     registerDecorator({
       target: object.constructor,

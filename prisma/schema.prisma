@@ -15,9 +15,9 @@ model User {
   createdAt DateTime  @default(now()) @map("created_at")
   updatedAt DateTime  @updatedAt @map("updated_at")
   roles     Role[]
-  Token     Token[]
   isBlocked Boolean   @default(false) @map("is_blocked")
   plants    Plant[]
+  Token     Token[]
 
   @@map("users")
 }
@@ -25,9 +25,9 @@ model User {
 model Token {
   token     String   @unique
   exp       DateTime
-  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
   userId    String   @db.Uuid
   userAgent String   @map("user_agent")
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@map("tokens")
 }
@@ -35,14 +35,14 @@ model Token {
 model Plant {
   id            String    @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
   name          String
-  type          PlantType @relation(fields: [plantTypeId], references: [id])
   plantTypeId   String    @db.Uuid
-  user          User      @relation(fields: [userId], references: [id], onDelete: Cascade)
   userId        String    @db.Uuid
   plantingDate  DateTime  @map("planting_date")
   currentStatus String    @map("current_status")
   soilType      String    @map("soil_type")
   data          Data[]
+  type          PlantType @relation(fields: [plantTypeId], references: [id])
+  user          User      @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@map("plants")
 }
@@ -53,9 +53,9 @@ model Data {
   temperature   Float
   light         Float
   nutrientLevel Float    @map("nutrient_level")
-  plant         Plant    @relation(fields: [plantId], references: [id], onDelete: Cascade)
   plantId       String   @db.Uuid
   timestamp     DateTime @default(now())
+  plant         Plant    @relation(fields: [plantId], references: [id], onDelete: Cascade)
 
   @@map("data")
 }
