@@ -75,6 +75,7 @@ model PlantType {
 enum Role {
   ADMIN
   USER
+  SENSOR
 }
 
 enum Provider {

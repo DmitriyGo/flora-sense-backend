@@ -1,20 +1,24 @@
-import { Controller, Get, Post, Delete, Param, Body, Patch } from '@nestjs/common';
+import { Controller, Get, Post, Delete, Param, Body, Patch, UseGuards } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiParam, ApiBody, ApiBearerAuth } from '@nestjs/swagger';
+import { Role } from '@prisma/client';
 
 import { CreatePlantDto, UpdatePlantDto } from './dto';
 import { PlantService } from './plant.service';
 
+import { RolesGuard } from '@auth/guargs/role.guard';
 import { JwtPayload } from '@auth/interfaces';
-import { CurrentUser } from '@common/decorators';
+import { CurrentUser, Roles } from '@common/decorators';
 
 @ApiBearerAuth()
 @ApiTags('plants')
 @Controller('plants')
+@UseGuards(RolesGuard)
 export class PlantController {
   constructor(private readonly plantService: PlantService) {}
 
   @ApiOperation({ summary: 'Get all plants' })
   @Get()
+  @Roles(Role.ADMIN)
   async getAll() {
     return this.plantService.getAll();
   }
@@ -28,6 +32,7 @@ export class PlantController {
   @ApiOperation({ summary: 'Get plant by ID' })
   @ApiParam({ name: 'id', required: true, description: 'ID of the plant' })
   @Get(':id')
+  @Roles(Role.ADMIN)
   async getById(@Param('id') id: string) {
     return this.plantService.getById(id);
   }
