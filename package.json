@@ -1,7 +1,7 @@
 {
-  "name": "iluvcoffee",
-  "version": "0.0.1",
-  "description": "",
+  "name": "flora-sense",
+  "version": "1",
+  "description": "The backend of the \"House Plant Microclimate Management System,\" developed for a university's Software Architecture course, collects and analyzes environmental data from sensors to automatically adjust conditions for optimal plant health.",
   "author": "Dmytro Horbatenko",
   "private": true,
   "license": "MIT",
