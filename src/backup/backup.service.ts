@@ -1,8 +1,10 @@
 import { Injectable, NotFoundException, InternalServerErrorException } from '@nestjs/common';
 import * as csvParser from 'csv-parser';
 import { createObjectCsvWriter } from 'csv-writer';
+import { v4 as uuidv4 } from 'uuid';
 
 import * as fs from 'fs';
+import * as path from 'path';
 
 import { BackupDto } from './dto/backup.dto';
 
@@ -19,7 +21,11 @@ export class BackupService {
     const plantTypes = await this.prisma.plantType.findMany();
     const tokens = await this.prisma.token.findMany();
 
-    const fileName = `backup-${new Date().toISOString()}.csv`;
+    if (!fs.existsSync('backups')) {
+      fs.mkdirSync('backups');
+    }
+
+    const fileName = `backups/backup-${new Date().toISOString()}.csv`;
 
     const csvWriter = createObjectCsvWriter({
       path: fileName,
@@ -82,12 +88,14 @@ export class BackupService {
   }
 
   async restoreBackup(fileName: string): Promise<void> {
-    if (!fs.existsSync(fileName)) {
+    const filePath = path.resolve('backups', fileName);
+
+    if (!fs.existsSync(filePath)) {
       throw new NotFoundException(`Backup file ${fileName} not found`);
     }
 
     const csvData = [];
-    fs.createReadStream(fileName)
+    fs.createReadStream(filePath)
       .pipe(csvParser())
       .on('data', (row) => {
         csvData.push(row);
@@ -99,66 +107,108 @@ export class BackupService {
         await this.prisma.plantType.deleteMany({});
         await this.prisma.user.deleteMany({});
 
+        const users = [];
+        const plants = [];
+        const data = [];
+        const plantTypes = [];
+        const tokens = [];
+
         for (const row of csvData) {
           if (row.Email) {
-            await this.prisma.user.create({
-              data: {
-                id: row.ID,
-                email: row.Email,
-                password: row.Password,
-                provider: row.Provider,
-                createdAt: new Date(row.CreatedAt),
-                updatedAt: new Date(row.UpdatedAt),
-                roles: row.Roles.split(',') as any,
-                isBlocked: row.IsBlocked === 'true',
-              },
-            });
+            users.push(row);
           } else if (row.PlantID) {
-            await this.prisma.plant.create({
-              data: {
-                id: row.PlantID,
-                name: row.Name,
-                plantTypeId: row.PlantTypeID,
-                userId: row.UserID,
-                plantingDate: new Date(row.PlantingDate),
-                currentStatus: row.CurrentStatus,
-                soilType: row.SoilType,
-              },
-            });
+            plants.push(row);
           } else if (row.DataID) {
-            await this.prisma.data.create({
-              data: {
-                id: row.DataID,
-                humidity: parseFloat(row.Humidity),
-                temperature: parseFloat(row.Temperature),
-                light: parseFloat(row.Light),
-                nutrientLevel: parseFloat(row.NutrientLevel),
-                plantId: row.PlantDataID,
-                timestamp: new Date(row.Timestamp),
-              },
-            });
+            data.push(row);
           } else if (row.TypeName) {
-            await this.prisma.plantType.create({
-              data: {
-                id: row.PlantTypeID,
-                typeName: row.TypeName,
-                description: row.Description,
-                optimalHumidity: parseFloat(row.OptimalHumidity),
-                optimalTemperature: parseFloat(row.OptimalTemperature),
-                optimalLight: parseFloat(row.OptimalLight),
-              },
-            });
+            plantTypes.push(row);
           } else if (row.Token) {
-            await this.prisma.token.create({
-              data: {
-                token: row.Token,
-                exp: new Date(row.Exp),
-                userId: row.UserID,
-                userAgent: row.UserAgent,
-              },
-            });
+            tokens.push(row);
           }
         }
+
+        console.log('users ==>', users);
+        console.log('plants ==>', plants);
+        console.log('data ==>', data);
+        console.log('plantTypes ==>', plantTypes);
+        console.log('tokens ==>', tokens);
+
+        await Promise.all(
+          users.map((user) =>
+            this.prisma.user.create({
+              data: {
+                id: user.ID || uuidv4(),
+                email: user.Email,
+                password: user.Password,
+                provider: user.Provider || null, // Set to null if empty
+                createdAt: new Date(user.CreatedAt),
+                updatedAt: new Date(user.UpdatedAt),
+                roles: user.Roles.split(',') as any,
+                isBlocked: user.IsBlocked === 'true',
+              },
+            }),
+          ),
+        );
+
+        await Promise.all(
+          plantTypes.map((plantType) =>
+            this.prisma.plantType.create({
+              data: {
+                id: plantType.PlantTypeID || uuidv4(),
+                typeName: plantType.TypeName,
+                description: plantType.Description,
+                optimalHumidity: parseFloat(plantType.OptimalHumidity),
+                optimalTemperature: parseFloat(plantType.OptimalTemperature),
+                optimalLight: parseFloat(plantType.OptimalLight),
+              },
+            }),
+          ),
+        );
+
+        await Promise.all(
+          plants.map((plant) =>
+            this.prisma.plant.create({
+              data: {
+                id: plant.PlantID || uuidv4(),
+                name: plant.Name,
+                plantTypeId: plant.PlantTypeID || null,
+                userId: plant.UserID || null,
+                plantingDate: plant.PlantingDate ? new Date(plant.PlantingDate) : null,
+                currentStatus: plant.CurrentStatus,
+                soilType: plant.SoilType,
+              },
+            }),
+          ),
+        );
+
+        await Promise.all(
+          data.map((dataRow) =>
+            this.prisma.data.create({
+              data: {
+                id: dataRow.DataID || uuidv4(),
+                humidity: parseFloat(dataRow.Humidity),
+                temperature: parseFloat(dataRow.Temperature),
+                light: parseFloat(dataRow.Light),
+                nutrientLevel: parseFloat(dataRow.NutrientLevel),
+                plantId: dataRow.PlantDataID,
+                timestamp: dataRow.Timestamp ? new Date(dataRow.Timestamp) : new Date(),
+              },
+            }),
+          ),
+        );
+
+        await Promise.all(
+          tokens.map((token) =>
+            this.prisma.token.create({
+              data: {
+                token: token.Token,
+                exp: new Date(token.Exp) || new Date(),
+                userId: token.UserID,
+                userAgent: token.UserAgent,
+              },
+            }),
+          ),
+        );
       })
       .on('error', (err) => {
         throw new InternalServerErrorException(`Error processing CSV file: ${err.message}`);

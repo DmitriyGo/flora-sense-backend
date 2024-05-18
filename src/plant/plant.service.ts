@@ -64,6 +64,13 @@ export class PlantService {
   }
 
   async delete(id: string) {
-    return this.prisma.plant.delete({ where: { id } });
+    return this.prisma.$transaction(async (prisma) => {
+      await prisma.data.deleteMany({
+        where: { plantId: id },
+      });
+      return prisma.plant.delete({
+        where: { id },
+      });
+    });
   }
 }

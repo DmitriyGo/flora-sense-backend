@@ -1,6 +1,8 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { IsNotEmpty, IsNumber, IsUUID, IsDateString } from 'class-validator';
 
+import { IsPlantExists } from '@/validators';
+
 export class CreatePlantDataDto {
   @ApiProperty({ example: 40, description: 'The humidity level of the plant' })
   @IsNumber()
@@ -25,6 +27,7 @@ export class CreatePlantDataDto {
   @ApiProperty({ example: 'uuid-of-plant', description: 'The ID of the plant' })
   @IsUUID()
   @IsNotEmpty()
+  @IsPlantExists()
   plantId: string;
 
   @ApiProperty({
