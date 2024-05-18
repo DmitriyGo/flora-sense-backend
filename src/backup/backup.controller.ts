@@ -1,5 +1,15 @@
-import { Controller, Post, Get, Param, Body, Res, NotFoundException } from '@nestjs/common';
+import {
+  Controller,
+  Post,
+  Get,
+  Param,
+  Body,
+  Res,
+  NotFoundException,
+  UseGuards,
+} from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiBody, ApiParam, ApiBearerAuth } from '@nestjs/swagger';
+import { Role } from '@prisma/client';
 import { Response } from 'express';
 
 import * as fs from 'fs';
@@ -8,17 +18,22 @@ import * as path from 'path';
 import { BackupService } from './backup.service';
 import { BackupDto } from './dto/backup.dto';
 
+import { RolesGuard } from '@auth/guargs/role.guard';
+import { Roles } from '@common/decorators';
+
 // eslint-disable-next-line @typescript-eslint/no-var-requires
 const JSZip = require('jszip');
 
 @ApiBearerAuth()
 @ApiTags('backup')
 @Controller('backup')
+@UseGuards(RolesGuard)
 export class BackupController {
   constructor(private readonly backupService: BackupService) {}
 
   @ApiOperation({ summary: 'Create a backup' })
   @Post()
+  @Roles(Role.ADMIN)
   async createBackup() {
     return this.backupService.createBackup();
   }
@@ -26,6 +41,7 @@ export class BackupController {
   @ApiOperation({ summary: 'Restore a backup' })
   @ApiBody({ type: BackupDto })
   @Post('restore')
+  @Roles(Role.ADMIN)
   async restoreBackup(@Body() backupDto: BackupDto) {
     return this.backupService.restoreBackup(backupDto.fileName);
   }
@@ -33,6 +49,7 @@ export class BackupController {
   @ApiOperation({ summary: 'Download a backup' })
   @ApiParam({ name: 'folderName', required: true, description: 'The name of the backup folder' })
   @Get('download/:folderName')
+  @Roles(Role.ADMIN)
   async downloadBackup(@Param('folderName') folderName: string, @Res() res: Response) {
     const folderPath = path.resolve('backups', folderName);
 
