@@ -1,8 +1,15 @@
-import { Controller, Post, Body } from '@nestjs/common';
-import { ApiTags, ApiOperation, ApiBody, ApiBearerAuth } from '@nestjs/swagger';
+import { Controller, Post, Get, Param, Body, Res, NotFoundException } from '@nestjs/common';
+import { ApiTags, ApiOperation, ApiBody, ApiParam, ApiBearerAuth } from '@nestjs/swagger';
+import { Response } from 'express';
+
+import * as fs from 'fs';
+import * as path from 'path';
 
 import { BackupService } from './backup.service';
 import { BackupDto } from './dto/backup.dto';
+
+// eslint-disable-next-line @typescript-eslint/no-var-requires
+const JSZip = require('jszip');
 
 @ApiBearerAuth()
 @ApiTags('backup')
@@ -23,23 +30,35 @@ export class BackupController {
     return this.backupService.restoreBackup(backupDto.fileName);
   }
 
-  //   @ApiOperation({ summary: 'Download a backup' })
-  //   @ApiParam({ name: 'folderName', required: true, description: 'The name of the backup folder' })
-  //   @Get('download/:folderName')
-  //   async downloadBackup(@Param('folderName') folderName: string, @Res() res: Response) {
-  //     const folderPath = path.resolve('backups', folderName);
+  @ApiOperation({ summary: 'Download a backup' })
+  @ApiParam({ name: 'folderName', required: true, description: 'The name of the backup folder' })
+  @Get('download/:folderName')
+  async downloadBackup(@Param('folderName') folderName: string, @Res() res: Response) {
+    const folderPath = path.resolve('backups', folderName);
 
-  //     if (!fs.existsSync(folderPath)) {
-  //       throw new NotFoundException(`Backup folder ${folderName} not found`);
-  //     }
+    if (!fs.existsSync(folderPath)) {
+      throw new NotFoundException(`Backup folder ${folderName} not found`);
+    }
 
-  //     const zipFilePath = `${folderPath}.zip`;
+    const zip = new JSZip();
+    const files = fs.readdirSync(folderPath);
 
-  //     // Create a zip file of the backup folder
-  //     const output = fs.createWriteStream(zipFilePath);
+    for (const file of files) {
+      const filePath = path.join(folderPath, file);
+      const fileContent = fs.readFileSync(filePath);
+      zip.file(file, fileContent);
+    }
 
-  //     output.on('close', () => {
-  //       res.download(zipFilePath);
-  //     });
-  //   }
+    const zipContent = await zip.generateAsync({ type: 'nodebuffer' });
+    const zipFilePath = path.resolve('backups', `${folderName}.zip`);
+    fs.writeFileSync(zipFilePath, zipContent);
+
+    res.download(zipFilePath, `${folderName}.zip`, (err) => {
+      if (err) {
+        throw new NotFoundException(`Error downloading backup: ${err.message}`);
+      }
+      // Clean up the zip file after download
+      fs.unlinkSync(zipFilePath);
+    });
+  }
 }

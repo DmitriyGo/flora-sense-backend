@@ -171,7 +171,6 @@ export class BackupService {
   async restoreBackup(folderName: string): Promise<void> {
     const backupDir = path.resolve('backups', folderName);
 
-
     const parseCSV = (filePath: string) => {
       return new Promise<any[]>((resolve, reject) => {
         const records: any[] = [];
@@ -182,7 +181,7 @@ export class BackupService {
           .on('error', reject);
       });
     };
-    
+
     const userRecords = await parseCSV(path.join(backupDir, 'users.csv'));
     for (const record of userRecords) {
       const { id, email, password, provider, createdAt, updatedAt, roles, isBlocked } = record;
