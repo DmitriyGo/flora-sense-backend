@@ -31,7 +31,7 @@ export class CreatePlantDataDto {
   plantId: string;
 
   @ApiProperty({
-    example: '2022-01-01T00:00:00.000Z',
+    example: new Date().toISOString(),
     description: 'The timestamp of the data entry',
   })
   @IsDateString()

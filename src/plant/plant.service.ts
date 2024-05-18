@@ -12,7 +12,6 @@ export class PlantService {
     return this.prisma.plant.findMany({
       include: {
         type: true,
-        user: true,
         data: true,
       },
     });
@@ -23,24 +22,24 @@ export class PlantService {
       where: { id },
       include: {
         type: true,
-        user: true,
         data: true,
       },
     });
   }
-  async create(data: CreatePlantDto) {
-    // console.log('this.prisma ==>', this.prisma);
-    // const plantType = await this.prisma.plantType.findUnique({ where: { id: data.plantTypeId } });
-    // if (!plantType) {
-    //   throw new NotFoundException(`PlantType with ID ${data.plantTypeId} not found`);
-    // }
-    // console.log('plantType ==>', plantType);
-    // // Перевірка існування userId
-    // const user = await this.prisma.user.findUnique({ where: { id: data.userId } });
-    // if (!user) {
-    //   throw new NotFoundException(`User with ID ${data.userId} not found`);
-    // }
 
+  async getMy(userId: string) {
+    return this.prisma.plant.findMany({
+      include: {
+        type: true,
+        data: true,
+      },
+      where: {
+        userId,
+      },
+    });
+  }
+
+  async create(data: CreatePlantDto) {
     return this.prisma.plant.create({
       data,
       include: {

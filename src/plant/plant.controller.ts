@@ -4,6 +4,9 @@ import { ApiTags, ApiOperation, ApiParam, ApiBody, ApiBearerAuth } from '@nestjs
 import { CreatePlantDto, UpdatePlantDto } from './dto';
 import { PlantService } from './plant.service';
 
+import { JwtPayload } from '@auth/interfaces';
+import { CurrentUser } from '@common/decorators';
+
 @ApiBearerAuth()
 @ApiTags('plants')
 @Controller('plants')
@@ -14,6 +17,12 @@ export class PlantController {
   @Get()
   async getAll() {
     return this.plantService.getAll();
+  }
+
+  @ApiOperation({ summary: 'Get my plants' })
+  @Get('my')
+  async getMy(@CurrentUser() user: JwtPayload) {
+    return this.plantService.getMy(user.id);
   }
 
   @ApiOperation({ summary: 'Get plant by ID' })

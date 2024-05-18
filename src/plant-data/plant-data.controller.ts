@@ -45,4 +45,22 @@ export class PlantDataController {
   async delete(@Param('id') id: string) {
     return this.plantDataService.delete(id);
   }
+
+  @ApiOperation({ summary: 'Get average parameters' })
+  @Get('average/:plantId')
+  async getAverageParameters(@Param('plantId') plantId: string) {
+    return this.plantDataService.getAverageParameters(plantId);
+  }
+
+  @ApiOperation({ summary: 'Get parameter trends' })
+  @Get('trends/:plantId')
+  async getParameterTrends(@Param('plantId') plantId: string) {
+    return this.plantDataService.getParameterTrends(plantId);
+  }
+
+  @ApiOperation({ summary: 'Get parameter correlations' })
+  @Get('correlations/:plantId')
+  async getParameterCorrelations(@Param('plantId') plantId: string) {
+    return this.plantDataService.getParameterCorrelations(plantId);
+  }
 }
