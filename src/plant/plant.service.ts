@@ -39,9 +39,9 @@ export class PlantService {
     });
   }
 
-  async create(data: CreatePlantDto) {
+  async create(data: CreatePlantDto, userId: string) {
     return this.prisma.plant.create({
-      data,
+      data: { ...data, userId },
       include: {
         type: true,
         user: true,
@@ -50,10 +50,10 @@ export class PlantService {
     });
   }
 
-  async update(id: string, data: UpdatePlantDto) {
+  async update(id: string, data: UpdatePlantDto, userId: string) {
     return this.prisma.plant.update({
       where: { id },
-      data,
+      data: { ...data, userId },
       include: {
         type: true,
         user: true,

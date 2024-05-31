@@ -40,16 +40,20 @@ export class PlantController {
   @ApiOperation({ summary: 'Create a new plant' })
   @ApiBody({ type: CreatePlantDto })
   @Post()
-  async create(@Body() createPlantDto: CreatePlantDto) {
-    return this.plantService.create(createPlantDto);
+  async create(@Body() createPlantDto: CreatePlantDto, @CurrentUser() user: JwtPayload) {
+    return this.plantService.create(createPlantDto, user.id);
   }
 
   @ApiOperation({ summary: 'Update a plant' })
   @ApiParam({ name: 'id', required: true, description: 'ID of the plant' })
   @ApiBody({ type: UpdatePlantDto })
   @Patch(':id')
-  async update(@Param('id') id: string, @Body() updatePlantDto: UpdatePlantDto) {
-    return this.plantService.update(id, updatePlantDto);
+  async update(
+    @Param('id') id: string,
+    @Body() updatePlantDto: UpdatePlantDto,
+    @CurrentUser() user: JwtPayload,
+  ) {
+    return this.plantService.update(id, updatePlantDto, user.id);
   }
 
   @ApiOperation({ summary: 'Delete a plant' })

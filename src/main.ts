@@ -29,8 +29,8 @@ async function bootstrap() {
   useContainer(app.select(AppModule), { fallbackOnErrors: true });
 
   const config = new DocumentBuilder()
-    .setTitle('Insanity Bets API')
-    .setDescription('Insanity Bets API description')
+    .setTitle('FloraSense API')
+    .setDescription('FloraSense API description')
     .setVersion('1.0')
     .addBearerAuth()
     .build();
