@@ -30,7 +30,8 @@ export class AuthService {
   async refreshTokens(refreshToken: string, agent: string): Promise<Tokens> {
     const token = await this.prismaService.token.delete({ where: { token: refreshToken } });
     if (!token || new Date(token.exp) < new Date()) {
-      throw new UnauthorizedException();
+      await this.deleteRefreshToken(refreshToken);
+      throw new ConflictException();
     }
     const user = await this.userService.findOne(token.userId);
     return this.generateTokens(user, agent);
@@ -84,11 +85,11 @@ export class AuthService {
       where: { token },
       update: {
         token: v4(),
-        exp: add(new Date(), { months: 1 }),
+        exp: add(new Date(), { days: 30 }),
       },
       create: {
         token: v4(),
-        exp: add(new Date(), { months: 1 }),
+        exp: add(new Date(), { days: 30 }),
         userId,
         userAgent: agent,
       },

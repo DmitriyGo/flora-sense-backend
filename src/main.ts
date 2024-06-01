@@ -13,7 +13,10 @@ async function bootstrap() {
   app.setGlobalPrefix(globalPrefix);
   const port = process.env.PORT || 3000;
 
-  app.enableCors();
+  app.enableCors({
+    origin: 'http://localhost:5173',
+    credentials: true,
+  });
   app.use(cookieParser());
   app.useGlobalInterceptors();
   app.useGlobalPipes(
