@@ -9,12 +9,13 @@ import { AppModule } from './app.module';
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
   const globalPrefix = 'api';
-
   app.setGlobalPrefix(globalPrefix);
+
   const port = process.env.PORT || 3000;
+  const FRONT_END_URL = process.env.ALLOWED_FRONT_END_ORIGIN;
 
   app.enableCors({
-    origin: 'http://localhost:5173',
+    origin: FRONT_END_URL ?? '*',
     credentials: true,
   });
   app.use(cookieParser());
